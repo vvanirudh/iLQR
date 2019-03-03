@@ -18,7 +18,7 @@ using Matrix = Eigen::Matrix<double, rDim, cDim>;
 
 static const double DEFAULTSTEPSIZE = 0.0009765625;
 
-template <size_t xDim, size_t uDim>
+template <int xDim, int uDim>
 void iterativeLQR(const size_t& ell,
                   const Vector<xDim>& initState,
                   const Vector<uDim>& uNominal,
