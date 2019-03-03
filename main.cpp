@@ -88,37 +88,8 @@ int main() {
 
     clock_t beginTime = clock();
 
-    std::function<Vector<X_DIM>(const Vector<X_DIM>&, const Vector<U_DIM>&)> gfp = std::bind(&DiffDriveEnv::g,
-                                                                                             &env,
-                                                                                             std::placeholders::_1,
-                                                                                             std::placeholders::_2);
-    std::function<void(const Vector<X_DIM>&, SymmetricMatrix<X_DIM>&, Vector<X_DIM>&, const size_t&)> quadratizeFinalCostfp = std::bind(&DiffDriveEnv::quadratizeFinalCost,
-                                                                                                                                        &env,
-                                                                                                                                        std::placeholders::_1,
-                                                                                                                                        std::placeholders::_2,
-                                                                                                                                        std::placeholders::_3,
-                                                                                                                                        std::placeholders::_4);
-    std::function<double(const Vector<X_DIM>&)> cellfp = std::bind(&DiffDriveEnv::cell,
-                                                                   &env,
-                                                                   std::placeholders::_1);
-    std::function<void(const Vector<X_DIM>&, const Vector<U_DIM>&, const size_t&, Matrix<U_DIM, X_DIM>&, SymmetricMatrix<X_DIM>&, SymmetricMatrix<U_DIM>&, Vector<X_DIM>&, Vector<U_DIM>&, const size_t&)> quadratizeCostfp = std::bind(&DiffDriveEnv::quadratizeCost, &env,
-                                      std::placeholders::_1,
-                                      std::placeholders::_2,
-                                      std::placeholders::_3,
-                                      std::placeholders::_4,
-                                      std::placeholders::_5,
-                                      std::placeholders::_6,
-                                      std::placeholders::_7,
-                                      std::placeholders::_8,
-                                      std::placeholders::_9);
-    std::function<double(const Vector<X_DIM>&, const Vector<U_DIM>&, const size_t&)> ctfp = std::bind(&DiffDriveEnv::ct,
-                                                                                                      &env,
-                                                                                                      std::placeholders::_1,
-                                                                                                      std::placeholders::_2,
-                                                                                                      std::placeholders::_3);
-
     Vector<U_DIM> uNominal = Vector<U_DIM>::Zero();
-    iterativeLQR(env.ell, env.xStart, uNominal, gfp, quadratizeFinalCostfp, cellfp, quadratizeCostfp, ctfp, L, l, true, numIter);
+    iterativeLQR(env.ell, env.xStart, uNominal, env.g, env.quadratizeFinalCost, env.cell, env.quadratizeCost, env.ct, L, l, true, numIter);
 
     clock_t endTime = clock();
     std::cerr << "Iterative LQR: NumIter: " << numIter << " Time: " << (endTime - beginTime) / (double) CLOCKS_PER_SEC << std::endl;
