@@ -1,4 +1,3 @@
-#include "ilqr.h"
 #include "ilqr_diffdrive.h"
 #include <iostream>
 
@@ -89,7 +88,24 @@ int main() {
     clock_t beginTime = clock();
 
     Vector<U_DIM> uNominal = Vector<U_DIM>::Zero();
-    iterativeLQR(env.ell, env.xStart, uNominal, env.g, env.quadratizeFinalCost, env.cell, env.quadratizeCost, env.ct, L, l, true, numIter);
+
+    auto qFc = [&](const Vector<X_DIM>& x, SymmetricMatrix<X_DIM>& Qell, Vector<X_DIM>& qell, const size_t& iter) {
+                   return quadratizeFinalCost(env, x, Qell, qell, iter);
+               };
+    auto c = [&](const Vector<X_DIM>& x) {
+                 return cell(env, x);
+             };
+    auto qc = [&](const Vector<X_DIM>& x, const Vector<U_DIM>& u, const size_t& t, Matrix<U_DIM,X_DIM>& Pt, SymmetricMatrix<X_DIM>& Qt, SymmetricMatrix<U_DIM>& Rt, Vector<X_DIM>& qt, Vector<U_DIM>& rt, const size_t& iter) {
+                  return quadratizeCost(env, x, u, t, Pt, Qt, Rt, qt, rt, iter);
+              };
+    auto ctf = [&](const Vector<X_DIM>& x, const Vector<U_DIM>& u, const size_t& t) {
+                   return ct(env, x, u, t);
+               };
+    auto gf = [&](const Vector<X_DIM>& x, const Vector<U_DIM>& u) {
+                  return g(env, x, u);
+              };
+    
+    iterativeLQR(env.ell, env.xStart, uNominal, gf, qFc, c, qc, ctf, L, l, true, numIter);
 
     clock_t endTime = clock();
     std::cerr << "Iterative LQR: NumIter: " << numIter << " Time: " << (endTime - beginTime) / (double) CLOCKS_PER_SEC << std::endl;
@@ -98,7 +114,7 @@ int main() {
     Vector<X_DIM> x = env.xStart;
     for (size_t t = 0; t < env.ell; ++t) {
         std::cerr << t << ": " << x.transpose();
-        x = env.g(x, L[t]*x + l[t]);
+        x = g(env, x, L[t]*x + l[t]);
     }
     std::cerr << env.ell << ": " << x.transpose();
 

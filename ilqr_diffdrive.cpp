@@ -81,17 +81,17 @@ void DiffDriveEnv::quadratizeObstacleCost(const Vector<X_DIM>& x, SymmetricMatri
     q.head(DIM) = qObs - QObs * x.head(DIM) + q.head(DIM);
 }
 
-double DiffDriveEnv::ct(const Vector<X_DIM>& x, const Vector<U_DIM>& u, const size_t& t) {
+double ct(DiffDriveEnv& env, const Vector<X_DIM>& x, const Vector<U_DIM>& u, const size_t& t) {
     double cost = 0;
     if (t == 0) {
-        cost += ((x - xStart).transpose()*Q*(x - xStart));
+        cost += ((x - env.xStart).transpose()*env.Q*(x - env.xStart));
     }
-    cost += ((u - uNominal).transpose()*R*(u - uNominal));
-    cost += this->obstacleCost(x);
+    cost += ((u - env.uNominal).transpose()*env.R*(u - env.uNominal));
+    cost += env.obstacleCost(x);
     return cost;
 }
 
-void DiffDriveEnv::quadratizeCost(const Vector<X_DIM>& x, const Vector<U_DIM>& u, const size_t& t, Matrix<U_DIM,X_DIM>& Pt, SymmetricMatrix<X_DIM>& Qt, SymmetricMatrix<U_DIM>& Rt, Vector<X_DIM>& qt, Vector<U_DIM>& rt, const size_t& iter) {
+void quadratizeCost(DiffDriveEnv& env, const Vector<X_DIM>& x, const Vector<U_DIM>& u, const size_t& t, Matrix<U_DIM,X_DIM>& Pt, SymmetricMatrix<X_DIM>& Qt, SymmetricMatrix<U_DIM>& Rt, Vector<X_DIM>& qt, Vector<U_DIM>& rt, const size_t& iter) {
     /*Qt = hessian1(x, u, t, c); 
       Pt = ~hessian12(x, u, t, c);
       Rt = hessian2(x, u, t, c);
@@ -99,36 +99,36 @@ void DiffDriveEnv::quadratizeCost(const Vector<X_DIM>& x, const Vector<U_DIM>& u
       rt = jacobian2(x, u, t, c) - Pt*x - Rt*u;*/
 
     if (t == 0) {
-        Qt = Q;
-        qt = -(Q*xStart);
+        Qt = env.Q;
+        qt = -(env.Q*env.xStart);
     } else {
         Qt = SymmetricMatrix<X_DIM>::Zero(); 
         qt = Vector<X_DIM>::Zero();
         
         if (iter < 2) {
-            Qt(2,2) = rotCost;
-            qt[2] = -rotCost*(M_PI/2);
+            Qt(2,2) = env.rotCost;
+            qt[2] = -env.rotCost*(M_PI/2);
         }
     }
-    Rt = R;
-    rt = -(R*uNominal);
+    Rt = env.R;
+    rt = -(env.R*env.uNominal);
     Pt = Matrix<U_DIM, X_DIM>::Zero();
     
-    this->quadratizeObstacleCost(x, Qt, qt);
+    env.quadratizeObstacleCost(x, Qt, qt);
 }
 
 // Final cost function c_\ell(x_\ell)
-double DiffDriveEnv::cell(const Vector<X_DIM>& x) {
+double cell(DiffDriveEnv& env, const Vector<X_DIM>& x) {
     double cost = 0;
-    cost += ((x - xGoal).transpose()*Q*(x - xGoal));
+    cost += ((x - env.xGoal).transpose()*env.Q*(x - env.xGoal));
     return cost;
 }
 
-void DiffDriveEnv::quadratizeFinalCost(const Vector<X_DIM>& x, SymmetricMatrix<X_DIM>& Qell, Vector<X_DIM>& qell, const size_t& iter) {
+void quadratizeFinalCost(DiffDriveEnv& env, const Vector<X_DIM>& x, SymmetricMatrix<X_DIM>& Qell, Vector<X_DIM>& qell, const size_t& iter) {
     /*Qell = hessian(x, cell); 
       qell = jacobian(x, cell) - Qell*x;*/
-    Qell = Q;
-    qell = -(Q*xGoal);
+    Qell = env.Q;
+    qell = -(env.Q*env.xGoal);
 }
 
 // Continuous-time dynamics \dot{x} = f(x,u)
@@ -144,12 +144,12 @@ Vector<X_DIM> DiffDriveEnv::f(const Vector<X_DIM>& x, const Vector<U_DIM>& u) {
 }
 
 // Discrete-time dynamics x_{t+1} = g(x_t, u_t)
-Vector<X_DIM> DiffDriveEnv::g(const Vector<X_DIM>& x, const Vector<U_DIM>& u) {
-    Vector<X_DIM> k1 = this->f(x, u);
-    Vector<X_DIM> k2 = this->f(x + 0.5*dt*k1, u);
-    Vector<X_DIM> k3 = this->f(x + 0.5*dt*k2, u);
-    Vector<X_DIM> k4 = this->f(x + dt*k3, u);
-    return x + (dt/6.0)*(k1 + 2.0*k2 + 2.0*k3 + k4);
+Vector<X_DIM> g(DiffDriveEnv& env, const Vector<X_DIM>& x, const Vector<U_DIM>& u) {
+    Vector<X_DIM> k1 = env.f(x, u);
+    Vector<X_DIM> k2 = env.f(x + 0.5*env.dt*k1, u);
+    Vector<X_DIM> k3 = env.f(x + 0.5*env.dt*k2, u);
+    Vector<X_DIM> k4 = env.f(x + env.dt*k3, u);
+    return x + (env.dt/6.0)*(k1 + 2.0*k2 + 2.0*k3 + k4);
 }
 
 void DiffDriveEnv::regularize(SymmetricMatrix<DIM>& Q) {

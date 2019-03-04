@@ -32,27 +32,28 @@ struct DiffDriveEnv {
     double obstacleCost(const Vector<X_DIM>& x);
     void quadratizeObstacleCost(const Vector<X_DIM>& x, SymmetricMatrix<X_DIM>& Q, Vector<X_DIM>& q);
 
-    // local cost function c_t(x_t, u_t)
-    double ct(const Vector<X_DIM>& x, const Vector<U_DIM>& u, const size_t& t);
-    void quadratizeCost(const Vector<X_DIM>& x,
-                        const Vector<U_DIM>& u,
-                        const size_t& t,
-                        Matrix<U_DIM,X_DIM>& Pt,
-                        SymmetricMatrix<X_DIM>& Qt,
-                        SymmetricMatrix<U_DIM>& Rt,
-                        Vector<X_DIM>& qt,
-                        Vector<U_DIM>& rt,
-                        const size_t& iter);
-
-    // final cost function
-    double cell(const Vector<X_DIM>& x);
-    void quadratizeFinalCost(const Vector<X_DIM>& x, SymmetricMatrix<X_DIM>& Qell, Vector<X_DIM>& qell, const size_t& iter);
-
     // Continuous-time dynamics \dot{x} = f(x, u)
     Vector<X_DIM> f(const Vector<X_DIM>& x, const Vector<U_DIM>& u);
 
-    // Discrete-time dynamics x_{t+1} = g(x_t, u_t)
-    Vector<X_DIM> g(const Vector<X_DIM>& x, const Vector<U_DIM>& u);
-
     void regularize(SymmetricMatrix<DIM>& Q);
 };
+
+// local cost function c_t(x_t, u_t)
+double ct(DiffDriveEnv& env, const Vector<X_DIM>& x, const Vector<U_DIM>& u, const size_t& t);
+void quadratizeCost(DiffDriveEnv& env,
+                    const Vector<X_DIM>& x,
+                    const Vector<U_DIM>& u,
+                    const size_t& t,
+                    Matrix<U_DIM,X_DIM>& Pt,
+                    SymmetricMatrix<X_DIM>& Qt,
+                    SymmetricMatrix<U_DIM>& Rt,
+                    Vector<X_DIM>& qt,
+                    Vector<U_DIM>& rt,
+                    const size_t& iter);
+
+// final cost function
+double cell(DiffDriveEnv& env, const Vector<X_DIM>& x);
+void quadratizeFinalCost(DiffDriveEnv& env, const Vector<X_DIM>& x, SymmetricMatrix<X_DIM>& Qell, Vector<X_DIM>& qell, const size_t& iter);
+
+// Discrete-time dynamics x_{t+1} = g(x_t, u_t)
+Vector<X_DIM> g(DiffDriveEnv& env, const Vector<X_DIM>& x, const Vector<U_DIM>& u);
