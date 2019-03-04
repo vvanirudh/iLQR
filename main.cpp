@@ -28,7 +28,7 @@ int main() {
     env.uNominal[1] = 2.5; 
 
     env.obstacleFactor = 1;
-    env.scaleFactor = 0.01;
+    env.scaleFactor = 1;
 
     // Environment settings
     env.robotRadius = 3.35/2.0;
