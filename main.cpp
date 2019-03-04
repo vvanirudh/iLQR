@@ -22,13 +22,13 @@ int main() {
     env.xStart[1] = -25;
     env.xStart[2] = M_PI;
 
-    env.R = 0.6*Matrix<U_DIM, U_DIM>::Zero();
+    env.R = 0.6*Matrix<U_DIM, U_DIM>::Identity();
 
     env.uNominal[0] = 2.5; 
     env.uNominal[1] = 2.5; 
 
-    env.obstacleFactor = 1.0;
-    env.scaleFactor = 1.0;
+    env.obstacleFactor = 1;
+    env.scaleFactor = 0.01;
 
     // Environment settings
     env.robotRadius = 3.35/2.0;
@@ -83,40 +83,25 @@ int main() {
     std::vector<Matrix<U_DIM, X_DIM> > L;
     std::vector<Vector<U_DIM> > l;
 
-    size_t numIter;
+    int numIter;
 
     clock_t beginTime = clock();
 
     Vector<U_DIM> uNominal = Vector<U_DIM>::Zero();
 
-    auto qFc = [&](const Vector<X_DIM>& x, SymmetricMatrix<X_DIM>& Qell, Vector<X_DIM>& qell, const size_t& iter) {
-                   return quadratizeFinalCost(env, x, Qell, qell, iter);
-               };
-    auto c = [&](const Vector<X_DIM>& x) {
-                 return cell(env, x);
-             };
-    auto qc = [&](const Vector<X_DIM>& x, const Vector<U_DIM>& u, const size_t& t, Matrix<U_DIM,X_DIM>& Pt, SymmetricMatrix<X_DIM>& Qt, SymmetricMatrix<U_DIM>& Rt, Vector<X_DIM>& qt, Vector<U_DIM>& rt, const size_t& iter) {
-                  return quadratizeCost(env, x, u, t, Pt, Qt, Rt, qt, rt, iter);
-              };
-    auto ctf = [&](const Vector<X_DIM>& x, const Vector<U_DIM>& u, const size_t& t) {
-                   return ct(env, x, u, t);
-               };
-    auto gf = [&](const Vector<X_DIM>& x, const Vector<U_DIM>& u) {
-                  return g(env, x, u);
-              };
-    
-    iterativeLQR(env.ell, env.xStart, uNominal, gf, qFc, c, qc, ctf, L, l, true, numIter);
+    void* g_env = &env;
+    iterativeLQR(env.ell, env.xStart, uNominal, g, quadratizeFinalCost, cell, quadratizeCost, ct, L, l, true, numIter, g_env);
 
     clock_t endTime = clock();
-    std::cerr << "Iterative LQR: NumIter: " << numIter << " Time: " << (endTime - beginTime) / (double) CLOCKS_PER_SEC << std::endl;
+    std::cout << "Iterative LQR: NumIter: " << numIter << " Time: " << (endTime - beginTime) / (double) CLOCKS_PER_SEC << std::endl;
 
     // Execute control policy
     Vector<X_DIM> x = env.xStart;
-    for (size_t t = 0; t < env.ell; ++t) {
-        std::cerr << t << ": " << x.transpose();
-        x = g(env, x, L[t]*x + l[t]);
+    for (int t = 0; t < env.ell; ++t) {
+        std::cout << t << ": " << x.transpose() << std::endl;
+        x = g(&env, x, L[t]*x + l[t]);
     }
-    std::cerr << env.ell << ": " << x.transpose();
+    std::cout << env.ell << ": " << x.transpose() << std::endl;
 
     return 0;
 }
